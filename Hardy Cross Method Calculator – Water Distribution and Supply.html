@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hardy Cross Method Calculator – Water Distribution and Supply</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--navy:#0b1f3a;--navy2:#132d52;--sky:#38bdf8;--sky2:#0ea5e9;--white:#ffffff;--bg:#eef7fd;--line:#d4e6f3;--text:#0f2740;--muted:#557089;--ok:#059669;--warn:#d97706;--err:#dc2626;--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--sans);color:var(--text);background:var(--bg);line-height:1.6}
+button,input{font:inherit}
+.app{min-height:100vh}
+/* Sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:250px;background:linear-gradient(180deg,var(--navy),var(--navy2));color:var(--white);display:flex;flex-direction:column;padding:24px 16px;z-index:50;transition:transform .25s ease}
+.brand{display:flex;gap:12px;align-items:center;padding:4px 8px 24px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:16px}
+.brand b{display:block;font-size:17px}
+.brand small{color:var(--sky);font-size:12px}
+.drop{width:36px;height:36px;color:var(--sky);flex:none}
+.nav-btn{display:flex;width:100%;text-align:left;background:none;border:0;color:#c9e6f7;padding:11px 14px;border-radius:10px;cursor:pointer;font-size:15px;margin-bottom:4px}
+.nav-btn:hover{background:rgba(56,189,248,.12);color:#fff}
+.nav-btn.active{background:var(--sky);color:var(--navy);font-weight:600}
+.nav-btn:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.side-foot{margin-top:auto;font-size:12px;color:#8fb3cc;padding:12px 8px}
+.overlay{display:none}
+/* Main */
+.main{margin-left:250px;min-height:100vh;position:relative}
+.topbar{display:flex;align-items:center;gap:14px;padding:18px 32px;background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topbar h1{font-size:19px;margin:0;color:var(--navy);font-weight:600}
+.topbar h1 span{color:var(--muted);font-weight:400}
+.menu-btn{display:none;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.page{display:none;padding:32px;max-width:1180px}
+.page.active{display:block}
+.wave-band{position:relative;overflow:hidden;border-radius:18px;background:linear-gradient(135deg,var(--navy),var(--navy2) 60%,var(--sky2));color:#fff;padding:40px 36px 80px;margin-bottom:24px}
+.wave-band svg.wave{position:absolute;left:0;bottom:0;width:100%;height:70px}
+.wave-band h2{font-size:30px;margin:0 0 10px;font-weight:700;max-width:620px}
+.wave-band p{margin:0 0 20px;max-width:620px;color:#d7edfb}
+.card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:20px;box-shadow:0 2px 10px rgba(11,31,58,.05)}
+.card h3{margin:0 0 10px;color:var(--navy);font-size:18px}
+.card p,.card li{color:#2c4560}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.btn{background:var(--sky);color:var(--navy);border:0;border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--sky2);color:#fff}
+.btn.ghost{background:transparent;color:var(--navy);border:1px solid var(--navy)}
+.btn.ghost:hover{background:var(--navy);color:#fff}
+.btn.danger{background:#fee2e2;color:var(--err)}
+.btn.danger:hover{background:var(--err);color:#fff}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.formula{font-family:var(--mono);background:var(--bg);border-left:4px solid var(--sky);padding:12px 14px;border-radius:8px;margin:10px 0;overflow-x:auto;font-size:15px;color:var(--navy)}
+ol.steps{padding-left:22px}
+ol.steps li{margin-bottom:10px}
+/* Calculator */
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.field input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:140px;color:var(--text);background:#fff}
+.counter{font-family:var(--mono);font-size:22px;color:var(--navy);font-weight:500;min-width:40px;text-align:center}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--bg);color:var(--navy);font-weight:600}
+td input{width:100%;min-width:80px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:13px}
+.num{font-family:var(--mono)}
+.diagram-box{background:linear-gradient(180deg,#ffffff,#f1f9fe);border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;overflow:hidden}
+.diagram-box::after{content:"";position:absolute;left:0;right:0;bottom:0;height:24px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M0 12 Q15 0 30 12 T60 12 T90 12 T120 12 V24 H0Z' fill='%2338bdf8' fill-opacity='.12'/%3E%3C/svg%3E") repeat-x;background-size:120px 24px;pointer-events:none}
+#diagram{width:100%;height:auto;display:block;max-height:460px}
+.pipe{stroke:var(--sky2);stroke-width:5;stroke-linecap:round}
+.junction{fill:var(--navy);stroke:#fff;stroke-width:3}
+.jlabel{font-size:13px;fill:var(--navy);font-weight:600}
+.pname{font-size:13px;fill:var(--navy);font-weight:700}
+.pdetail{font-size:11px;fill:var(--muted);font-family:var(--mono)}
+.arrow{fill:var(--navy)}
+.loop-arc{fill:none;stroke:var(--navy);stroke-width:2;stroke-dasharray:5 4}
+.loop-label{font-size:12px;fill:var(--muted)}
+.errbox{display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:10px;padding:12px 16px;margin:14px 0}
+.errbox.show{display:block}
+.errbox ul{margin:6px 0 0;padding-left:18px}
+.results{display:none;margin-top:24px}
+.results.show{display:block}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat small{color:var(--muted);font-size:12px;display:block}
+.stat b{font-size:22px;color:var(--navy);font-family:var(--mono);font-weight:500}
+.banner{border-radius:12px;padding:14px 18px;margin:16px 0;font-weight:500}
+.banner.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:var(--ok)}
+.banner.warn{background:#fffbeb;border:1px solid #fde68a;color:var(--warn)}
+.dir-cw{color:var(--sky2);font-weight:600}
+.dir-ccw{color:var(--warn);font-weight:600}
+.quiz-q{margin-bottom:18px}
+.quiz-q label{display:block;padding:7px 10px;border-radius:8px;cursor:pointer}
+.quiz-q label:hover{background:var(--bg)}
+.quiz-result{font-weight:600;margin-top:10px}
+/* Mobile */
+@media (max-width:860px){
+ .sidebar{transform:translateX(-100%)}
+ .sidebar.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.3)}
+ .overlay.show{display:block;position:fixed;inset:0;background:rgba(11,31,58,.45);z-index:40}
+ .main{margin-left:0}
+ .menu-btn{display:inline-block}
+ .topbar{padding:14px 16px}
+ .topbar h1{font-size:15px}
+ .topbar h1 span{display:none}
+ .page{padding:18px 14px}
+ .wave-band{padding:28px 20px 70px}
+ .wave-band h2{font-size:23px}
+ .field input{width:110px}
+}
+@media print{
+ .sidebar,.topbar,.controls,.btn-row,.table-wrap.edit,#calcInputs,.menu-btn,.overlay{display:none!important}
+ .main{margin:0}
+ .page{display:block!important;padding:0;max-width:none}
+ .page:not(#page-calc){display:none!important}
+ body{background:#fff}
+ .card,.stat,.diagram-box{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+ <div class="brand">
+  <svg class="drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C12 2 5 10 5 15a7 7 0 0 0 14 0C19 10 12 2 12 2z" fill="currentColor"/></svg>
+  <div><b>Hardy Cross</b><small>Water Distribution</small></div>
+ </div>
+ <nav>
+  <button class="nav-btn active" data-page="home">Home</button>
+  <button class="nav-btn" data-page="theory">Theory</button>
+  <button class="nav-btn" data-page="formula">Formula</button>
+  <button class="nav-btn" data-page="steps">Step-by-Step</button>
+  <button class="nav-btn" data-page="calc">Calculator</button>
+  <button class="nav-btn" data-page="example">Example</button>
+  <button class="nav-btn" data-page="quiz">Quiz</button>
+ </nav>
+ <div class="side-foot">Version 1: single closed pipe loop</div>
+</aside>
+<div class="overlay" id="overlay"></div>
+
+<main class="main">
+<header class="topbar">
+ <button class="menu-btn" id="menuBtn" aria-label="Open menu">Menu</button>
+ <h1>Hardy Cross Method Calculator <span>– Water Distribution and Supply</span></h1>
+</header>
+
+<!-- HOME -->
+<section class="page active" id="page-home">
+ <div class="wave-band">
+  <h2>Balance the flows in a pipe loop, one correction at a time.</h2>
+  <p>Enter the pipes of a closed loop, then let the calculator apply Hardy Cross corrections until head losses balance around the loop.</p>
+  <div class="btn-row"><button class="btn" data-go="calc">Open calculator</button><button class="btn ghost" data-go="example" style="color:#fff;border-color:#fff">See an example</button></div>
+  <svg class="wave" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,64 C240,120 480,0 720,64 C960,128 1200,0 1440,64 L1440,120 L0,120 Z" fill="rgba(56,189,248,.28)"/></svg>
+ </div>
+ <div class="grid">
+  <div class="card"><h3>Head loss</h3><p>Hazen–Williams gives the friction loss in each pipe from length, diameter, roughness and flow.</p></div>
+  <div class="card"><h3>Iterative balance</h3><p>Each pass adds one correction to every pipe flow in the loop until the net head loss is close to zero.</p></div>
+  <div class="card"><h3>Results you can keep</h3><p>See the iteration history, print the report or download it as a PDF.</p></div>
+ </div>
+</section>
+
+<!-- THEORY -->
+<section class="page" id="page-theory">
+ <div class="card"><h3>What the Hardy Cross method does</h3>
+  <p>Hardy Cross is an iterative method for finding pipe flows in a water network so that the head loss around every closed loop adds up to zero. It starts from a guessed flow distribution that satisfies continuity at each junction, then corrects the flows loop by loop.</p>
+  <p>Flows that run clockwise around the loop are taken as positive. Head loss in a pipe carries the same sign as its flow, so a balanced loop has its clockwise and counter-clockwise losses cancelling out.</p></div>
+ <div class="card"><h3>Hazen–Williams</h3>
+  <p>The Hazen–Williams equation estimates friction loss in pressurised water pipes. The coefficient C describes pipe roughness: a smoother pipe has a higher C and loses less head.</p></div>
+ <div class="card"><h3>Scope of this version</h3>
+  <p>This version handles one closed loop of 3 to 10 pipes. Each junction's implied outflow is taken from your initial flows and stays fixed during the iterations. Networks with several interconnected loops, pumps and valves are not modelled yet.</p></div>
+</section>
+
+<!-- FORMULA -->
+<section class="page" id="page-formula">
+ <div class="card"><h3>Head loss (Hazen–Williams, SI units)</h3>
+  <div class="formula">hf = 10.67 × L × |Q|^1.852 / (C^1.852 × D^4.871)</div>
+  <p>L is pipe length (m), Q is flow (m³/s), C is the Hazen–Williams coefficient and D is diameter (m). The sign of hf follows the sign of Q.</p></div>
+ <div class="card"><h3>Flow correction</h3>
+  <div class="formula">ΔQ = − Σhf / [1.852 × Σ(|hf / Q|)]</div>
+  <p>The same ΔQ is added to every pipe flow in the loop. Since |hf/Q| = r × |Q|^0.852, where r = 10.67 L / (C^1.852 × D^4.871), the calculator uses that form.</p></div>
+ <div class="card"><h3>Updated discharge</h3>
+  <div class="formula">Q_new = Q_old + ΔQ</div>
+  <p>Iteration stops when |ΔQ| is smaller than the tolerance you set on the Calculator page.</p></div>
+</section>
+
+<!-- STEPS -->
+<section class="page" id="page-steps">
+ <div class="card"><h3>Step-by-step procedure</h3>
+  <ol class="steps">
+   <li>Number the pipes in order around the loop, clockwise, and give each one a name.</li>
+   <li>Enter the length, diameter and Hazen–Williams C for each pipe.</li>
+   <li>Enter an initial flow for each pipe. Use positive values for clockwise flow and negative values for counter-clockwise flow. No flow may be zero.</li>
+   <li>For each pipe, compute r = 10.67 L / (C^1.852 D^4.871), then hf = r × Q × |Q|^0.852.</li>
+   <li>Sum the signed head losses (Σhf) and sum r × |Q|^0.852 (which equals Σ|hf/Q|).</li>
+   <li>Compute ΔQ = −Σhf / (1.852 × Σ|hf/Q|) and add it to every pipe flow.</li>
+   <li>Repeat until |ΔQ| is below the tolerance. The final flows are the balanced discharges.</li>
+  </ol>
+  <div class="btn-row"><button class="btn" data-go="calc">Try it in the calculator</button></div></div>
+</section>
+
+<!-- CALCULATOR -->
+<section class="page" id="page-calc">
+ <div class="card">
+  <div class="controls">
+   <div class="field"><span>Number of pipes</span><div style="display:flex;gap:8px;align-items:center"><button class="btn small ghost" id="btnMinus" aria-label="Remove last pipe">−</button><span class="counter" id="pipeCount">0</span><button class="btn small ghost" id="btnPlus" aria-label="Add pipe">+</button></div></div>
+   <label class="field" for="tol"><span>Convergence tolerance (m³/s)</span><input id="tol" type="number" step="any" value="0.000001"></label>
+   <label class="field" for="maxIt"><span>Maximum iterations</span><input id="maxIt" type="number" step="1" value="100"></label>
+  </div>
+  <div class="table-wrap edit" id="calcInputs">
+   <table>
+    <thead><tr><th>#</th><th>Pipe name</th><th>Length L (m)</th><th>Diameter D (m)</th><th>Initial flow Q (m³/s)</th><th>Hazen–Williams C</th><th></th></tr></thead>
+    <tbody id="pipeBody"></tbody>
+   </table>
+  </div>
+  <div class="btn-row">
+   <button class="btn" id="btnCalc">Calculate</button>
+   <button class="btn ghost" id="btnSample">Load sample</button>
+   <button class="btn ghost" id="btnReset">Reset</button>
+  </div>
+  <div class="errbox" id="errBox" role="alert"></div>
+ </div>
+
+ <div class="card">
+  <h3>Pipe network diagram</h3>
+  <p style="margin-top:0;color:var(--muted);font-size:14px">Arrows show flow direction. The dashed arrow in the centre is the reference loop direction, clockwise, which is the positive sense for flows.</p>
+  <div class="diagram-box">
+   <svg id="diagram" viewBox="0 0 600 420" role="img" aria-label="Pipe loop diagram"></svg>
+  </div>
+ </div>
+
+ <div class="results" id="results">
+  <div class="card">
+   <h3>Results dashboard</h3>
+   <div id="banner"></div>
+   <div class="grid" id="stats"></div>
+   <h3 style="margin-top:22px">Pipe flows and head loss</h3>
+   <div class="table-wrap"><table id="resTable"></table></div>
+   <h3 style="margin-top:22px">Iteration history</h3>
+   <div class="table-wrap" style="max-height:340px;overflow:auto"><table id="histTable"></table></div>
+   <div class="btn-row">
+    <button class="btn" id="btnPrint">Print results</button>
+    <button class="btn ghost" id="btnPdf">Download PDF</button>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- EXAMPLE -->
+<section class="page" id="page-example">
+ <div class="card"><h3>Sample loop</h3>
+  <p>The sample is a four-pipe loop named P1 to P4. Its initial flows are chosen so that the implied junction outflows balance, which is the condition the method needs. Click the button to load it into the calculator and run it.</p>
+  <p>Once it runs, the results show each pipe's initial and corrected flow, the head loss per pipe, the direction of flow and every iteration. The success banner confirms when the loop has converged within your tolerance.</p>
+  <div class="btn-row"><button class="btn" id="btnSample2">Load and calculate sample</button></div></div>
+ <div class="card"><h3>Reading the results</h3>
+  <p>A balanced loop has a total signed head loss close to zero. A positive corrected flow runs clockwise around the loop and a negative one runs counter-clockwise.</p></div>
+</section>
+
+<!-- QUIZ -->
+<section class="page" id="page-quiz">
+ <div class="card"><h3>Quick check</h3><div id="quizBox"></div>
+  <div class="btn-row"><button class="btn" id="btnQuiz">Check answers</button><button class="btn ghost" id="btnQuizReset">Try again</button></div>
+  <p class="quiz-result" id="quizScore"></p></div>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+const SAMPLE=[
+ {name:"P1",L:"300",D:"0.30",Q:"0.080",C:"110"},
+ {name:"P2",L:"250",D:"0.25",Q:"0.030",C:"100"},
+ {name:"P3",L:"200",D:"0.20",Q:"0.020",C:"100"},
+ {name:"P4",L:"350",D:"0.25",Q:"0.050",C:"90"}
+];
+let pipes=clone(SAMPLE);
+let lastResult=null;
+const $=id=>document.getElementById(id);
+function clone(a){return JSON.parse(JSON.stringify(a));}
+const num=s=>{const t=String(s).trim();return t===""?NaN:Number(t);};
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const f=(x,d)=>Number(x).toFixed(d);
+
+/* Navigation */
+function showPage(id){
+ document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+id));
+ document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+ closeSide(); window.scrollTo(0,0);
+}
+function closeSide(){$("sidebar").classList.remove("open");$("overlay").classList.remove("show");}
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.go)));
+$("menuBtn").addEventListener("click",()=>{$("sidebar").classList.add("open");$("overlay").classList.add("show");});
+$("overlay").addEventListener("click",closeSide);
+
+/* Pipe table */
+function renderRows(){
+ $("pipeBody").innerHTML=pipes.map((p,i)=>`<tr>
+  <td>${i+1}</td>
+  <td><input type="text" data-i="${i}" data-f="name" value="${esc(p.name)}"></td>
+  <td><input type="number" step="any" data-i="${i}" data-f="L" value="${esc(p.L)}"></td>
+  <td><input type="number" step="any" data-i="${i}" data-f="D" value="${esc(p.D)}"></td>
+  <td><input type="number" step="any" data-i="${i}" data-f="Q" value="${esc(p.Q)}"></td>
+  <td><input type="number" step="any" data-i="${i}" data-f="C" value="${esc(p.C)}"></td>
+  <td><button class="btn small danger" data-rm="${i}" aria-label="Remove pipe ${i+1}">Remove</button></td>
+ </tr>`).join("");
+ $("pipeCount").textContent=pipes.length;
+}
+$("pipeBody").addEventListener("input",e=>{
+ const i=+e.target.dataset.i, key=e.target.dataset.f;
+ if(key===undefined) return;
+ pipes[i][key]=e.target.value; clearResults(); drawDiagram();
+});
+$("pipeBody").addEventListener("click",e=>{
+ const i=e.target.dataset.rm;
+ if(i===undefined) return;
+ if(pipes.length<=3){showErrors(["A closed loop needs at least 3 pipes."]);return;}
+ pipes.splice(+i,1); renderRows(); clearResults(); drawDiagram();
+});
+$("btnPlus").addEventListener("click",()=>{
+ if(pipes.length>=10){showErrors(["Maximum 10 pipes are supported."]);return;}
+ pipes.push({name:"P"+(pipes.length+1),L:"",D:"",Q:"",C:"100"});
+ renderRows(); clearResults(); drawDiagram();
+});
+$("btnMinus").addEventListener("click",()=>{
+ if(pipes.length<=3){showErrors(["A closed loop needs at least 3 pipes."]);return;}
+ pipes.pop(); renderRows(); clearResults(); drawDiagram();
+});
+
+/* Validation */
+function showErrors(list){
+ const box=$("errBox");
+ if(!list.length){box.classList.remove("show");box.innerHTML="";return;}
+ box.innerHTML="<strong>Please fix the following:</strong><ul>"+list.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>";
+ box.classList.add("show");
+}
+function validate(){
+ const errs=[]; const n=pipes.length;
+ if(n<3) errs.push("A closed loop needs at least 3 pipes.");
+ if(n>10) errs.push("Maximum 10 pipes are supported.");
+ const data=pipes.map((p,i)=>{
+  const lab="Pipe "+(i+1)+": ";
+  const name=String(p.name).trim();
+  if(!name) errs.push(lab+"name is required.");
+  const L=num(p.L),D=num(p.D),Q=num(p.Q),C=num(p.C);
+  if(!(L>0)) errs.push(lab+"length must be a positive number.");
+  if(!(D>0)) errs.push(lab+"diameter must be a positive number.");
+  if(!(C>0)) errs.push(lab+"coefficient C must be a positive number.");
+  if(!isFinite(Q)||Q===0) errs.push(lab+"initial flow must be a non-zero number (positive = clockwise).");
+  return {name,L,D,Q,C};
+ });
+ const tol=num($("tol").value);
+ if(!(tol>0)) errs.push("Convergence tolerance must be greater than zero.");
+ const maxIt=num($("maxIt").value);
+ if(!(Number.isInteger(maxIt)&&maxIt>=1&&maxIt<=1000)) errs.push("Maximum iterations must be a whole number from 1 to 1000.");
+ return {errs,data,tol,maxIt};
+}
+
+/* Hardy Cross core */
+function hardyCross(data,tol,maxIt){
+ const r=data.map(p=>10.67*p.L/(Math.pow(p.C,1.852)*Math.pow(p.D,4.871)));
+ const Q0=data.map(p=>p.Q);
+ let Q=Q0.slice();
+ const history=[]; let converged=false;
+ for(let it=1;it<=maxIt;it++){
+  let sumH=0,sumR=0;
+  for(let i=0;i<Q.length;i++){
+   const a=Math.abs(Q[i]);
+   sumH+=Math.sign(Q[i])*r[i]*Math.pow(a,1.852);
+   sumR+=r[i]*Math.pow(a,0.852);
+  }
+  if(sumR===0) break;
+  const dQ=-sumH/(1.852*sumR);
+  Q=Q.map(q=>q+dQ);
+  history.push({it,sumH,sumR,dQ});
+  if(Math.abs(dQ)<tol){converged=true;break;}
+ }
+ const hf=Q.map((q,i)=>Math.sign(q)*r[i]*Math.pow(Math.abs(q),1.852));
+ const sumHf=hf.reduce((a,b)=>a+b,0);
+ return {Q0,Qf:Q,hf,sumHf,history,converged,r};
+}
+
+/* Diagram */
+function flowsForDiagram(){
+ if(lastResult) return lastResult.res.Qf;
+ return pipes.map(p=>{const x=num(p.Q);return isFinite(x)?x:0;});
+}
+function drawDiagram(){
+ const n=pipes.length, cx=300, cy=210, R=125;
+ const pts=[];
+ for(let j=0;j<n;j++){const a=-Math.PI/2+2*Math.PI*j/n;pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+ const flows=flowsForDiagram();
+ const arcAt=(r,deg)=>{const a=deg*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+ const [ax1,ay1]=arcAt(48,-150),[ax2,ay2]=arcAt(48,-30);
+ let s=`<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0b1f3a"/></marker></defs>`;
+ s+=`<path class="loop-arc" d="M${ax1},${ay1} A48,48 0 0 1 ${ax2},${ay2}" marker-end="url(#ah)"/>`;
+ s+=`<text class="loop-label" x="${cx}" y="${cy+18}" text-anchor="middle">Reference: clockwise</text>`;
+ for(let i=0;i<n;i++){
+  const [x1,y1]=pts[i],[x2,y2]=pts[(i+1)%n];
+  s+=`<line class="pipe" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  const mx=(x1+x2)/2,my=(y1+y2)/2;
+  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1;
+  const ux=dx/len,uy=dy/len,px=-uy,py=ux;
+  const q=flows[i]; const sg=q>=0?1:-1;
+  if(q!==0){
+   const tip=[mx+sg*ux*9,my+sg*uy*9];
+   const b1=[mx-sg*ux*7+px*6,my-sg*uy*7+py*6];
+   const b2=[mx-sg*ux*7-px*6,my-sg*uy*7-py*6];
+   s+=`<polygon class="arrow" points="${tip.join(",")} ${b1.join(",")} ${b2.join(",")}"/>`;
+  }
+  const nx=mx-cx,ny=my-cy,nl=Math.hypot(nx,ny)||1;
+  const lx=mx+nx/nl*34,ly=my+ny/nl*34;
+  const p=pipes[i];
+  const L=num(p.L),D=num(p.D);
+  const anchor=lx<cx-10?"end":(lx>cx+10?"start":"middle");
+  s+=`<text text-anchor="${anchor}"><tspan class="pname" x="${lx}" y="${ly}">${esc(p.name)}  Q=${f(q,4)}</tspan><tspan class="pdetail" x="${lx}" dy="14">L=${isFinite(L)?L:"–"} m, D=${isFinite(D)?D:"–"} m</tspan></text>`;
+ }
+ pts.forEach(([x,y],j)=>{
+  s+=`<circle class="junction" cx="${x}" cy="${y}" r="9"/>`;
+  const ix=(cx-x)/R*24,iy=(cy-y)/R*24;
+  s+=`<text class="jlabel" x="${x+ix}" y="${y+iy+4}" text-anchor="middle">J${j+1}</text>`;
+ });
+ $("diagram").innerHTML=s;
+}
+
+/* Results */
+function clearResults(){lastResult=null;$("results").classList.remove("show");}
+function renderResults(res,data,tol,maxIt){
+ const n=data.length;
+ const dirOf=q=>q>=0?'<span class="dir-cw">Clockwise</span>':'<span class="dir-ccw">Counter-clockwise</span>';
+ const last=res.history[res.history.length-1];
+ $("banner").innerHTML=res.converged
+  ?`<div class="banner ok">Converged after ${res.history.length} iteration${res.history.length===1?"":"s"}. The last correction |ΔQ| is below the tolerance of ${tol}, so the flows are balanced.</div>`
+  :`<div class="banner warn">Not converged within ${maxIt} iterations. Increase the maximum iterations or check the inputs.</div>`;
+ const totalH=res.hf.reduce((a,h)=>a+Math.abs(h),0);
+ $("stats").innerHTML=[
+  ["Iterations",res.history.length],
+  ["Final Σhf (m)",f(res.sumHf,8)],
+  ["Last |ΔQ| (m³/s)",last?f(Math.abs(last.dQ),8):"–"],
+  ["Total |hf| (m)",f(totalH,4)]
+ ].map(([a,b])=>`<div class="stat"><small>${a}</small><b>${b}</b></div>`).join("");
+ $("resTable").innerHTML=`<thead><tr><th>Pipe</th><th>Initial Q (m³/s)</th><th>Final Q (m³/s)</th><th>Head loss hf (m)</th><th>Flow direction</th></tr></thead><tbody>`+
+  data.map((p,i)=>`<tr><td>${esc(p.name)}</td><td class="num">${f(res.Q0[i],6)}</td><td class="num">${f(res.Qf[i],6)}</td><td class="num">${f(res.hf[i],4)}</td><td>${dirOf(res.Qf[i])}</td></tr>`).join("")+`</tbody>`;
+ $("histTable").innerHTML=`<thead><tr><th>Iteration</th><th>Σhf (m)</th><th>Σ|hf/Q| (m/(m³/s))</th><th>ΔQ (m³/s)</th></tr></thead><tbody>`+
+  (res.history.length?res.history.map(h=>`<tr><td>${h.it}</td><td class="num">${f(h.sumH,6)}</td><td class="num">${f(h.sumR,6)}</td><td class="num">${f(h.dQ,8)}</td></tr>`).join(""):`<tr><td colspan="4">No iterations were performed.</td></tr>`)+`</tbody>`;
+ $("results").classList.add("show");
+}
+
+function calculate(){
+ const v=validate();
+ showErrors(v.errs);
+ if(v.errs.length){clearResults();drawDiagram();return;}
+ const res=hardyCross(v.data,v.tol,v.maxIt);
+ if(!res.history.length){
+  showErrors(["The calculation could not start because every initial flow is zero."]);
+  clearResults();return;
+ }
+ lastResult={res,data:v.data,tol:v.tol,maxIt:v.maxIt};
+ renderResults(res,v.data,v.tol,v.maxIt);
+ drawDiagram();
+ $("results").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("btnCalc").addEventListener("click",calculate);
+function loadSample(){
+ pipes=clone(SAMPLE); $("tol").value="0.000001"; $("maxIt").value="100";
+ renderRows(); clearResults(); showErrors([]); drawDiagram(); calculate();
+}
+$("btnSample").addEventListener("click",loadSample);
+$("btnSample2").addEventListener("click",()=>{showPage("calc");loadSample();});
+$("btnReset").addEventListener("click",()=>{
+ pipes=[{name:"P1",L:"",D:"",Q:"",C:"100"},{name:"P2",L:"",D:"",Q:"",C:"100"},{name:"P3",L:"",D:"",Q:"",C:"100"}];
+ $("tol").value="0.000001"; $("maxIt").value="100";
+ renderRows(); clearResults(); showErrors([]); drawDiagram();
+});
+$("btnPrint").addEventListener("click",()=>window.print());
+$("btnPdf").addEventListener("click",()=>{
+ if(!lastResult){showErrors(["Run the calculation before downloading a PDF."]);return;}
+ if(!window.jspdf){showErrors(["The PDF library could not load. Use Print instead."]);return;}
+ const {res,data,tol,maxIt}=lastResult;
+ const doc=new window.jspdf.jsPDF();
+ let y=18;
+ const line=(t,b)=>{
+  doc.setFont("helvetica",b?"bold":"normal");
+  doc.setFontSize(b?12:10);
+  doc.splitTextToSize(String(t),180).forEach(part=>{
+   if(y>280){doc.addPage();y=18;}
+   doc.text(part,14,y); y+=b?8:5.5;
+  });
+ };
+ line("Hardy Cross Method Calculator – Water Distribution and Supply",true);
+ line("Head loss: hf = 10.67 L |Q|^1.852 / (C^1.852 D^4.871). Correction: dQ = -Sum(hf) / (1.852 Sum|hf/Q|).");
+ line("Tolerance: "+tol+" m^3/s    Maximum iterations: "+maxIt);
+ line("Result: "+(res.converged?"Converged after "+res.history.length+" iterations":"Not converged"));
+ line("",false);
+ line("Pipes",true);
+ data.forEach((p,i)=>line(p.name+": L="+p.L+" m, D="+p.D+" m, C="+p.C+", initial Q="+f(res.Q0[i],6)+", final Q="+f(res.Qf[i],6)+" m^3/s, hf="+f(res.hf[i],4)+" m, "+(res.Qf[i]>=0?"clockwise":"counter-clockwise")));
+ line("",false);
+ line("Iteration history",true);
+ res.history.forEach(h=>line("Iteration "+h.it+": Sum hf="+f(h.sumH,6)+", Sum|hf/Q|="+f(h.sumR,6)+", dQ="+f(h.dQ,8)));
+ doc.save("hardy-cross-results.pdf");
+});
+
+/* Quiz */
+const QUIZ=[
+ {q:"In the Hazen–Williams equation, the exponent applied to flow is:",o:["1.852","2","4.871","0.852"],a:0},
+ {q:"Which pipe property has the strongest effect on head loss, since it is raised to the power 4.871?",o:["Length","Diameter","Coefficient C","Pipe name"],a:1},
+ {q:"In the Hardy Cross method, the flow correction ΔQ is calculated as:",o:["−Σhf / [1.852 × Σ|hf/Q|]","+Σhf / [1.852 × ΣQ]","−ΣQ / Σhf","Σhf / Σ|Q|"],a:0},
+ {q:"The initial version of this calculator supports:",o:["A single closed pipe loop","Several interconnected loops","Pumps and valves only","Open branched networks"],a:0}
+];
+let quizAnswers=[];
+function renderQuiz(){
+ quizAnswers=QUIZ.map(()=>-1);
+ $("quizBox").innerHTML=QUIZ.map((item,qi)=>`<div class="quiz-q"><p><strong>${qi+1}. ${esc(item.q)}</strong></p>`+
+  item.o.map((opt,oi)=>`<label><input type="radio" name="q${qi}" value="${oi}"> ${esc(opt)}</label>`).join("")+`</div>`).join("");
+ $("quizScore").textContent="";
+}
+$("quizBox").addEventListener("change",e=>{
+ if(e.target.name&&e.target.name.startsWith("q")){quizAnswers[+e.target.name.slice(1)]=+e.target.value;}
+});
+$("btnQuiz").addEventListener("click",()=>{
+ let score=0;
+ QUIZ.forEach((item,qi)=>{
+  const chosen=quizAnswers[qi];
+  document.querySelectorAll(`input[name="q${qi}"]`).forEach(inp=>{
+   const lab=inp.parentElement;
+   lab.style.color=+inp.value===item.a?"var(--ok)":(+inp.value===chosen?"var(--err)":"");
+  });
+  if(chosen===item.a) score++;
+ });
+ $("quizScore").textContent=`You scored ${score} out of ${QUIZ.length}.`+(score===QUIZ.length?" Well done.":" Review the Theory and Formula pages and try again.");
+});
+$("btnQuizReset").addEventListener("click",renderQuiz);
+
+/* Init */
+renderRows(); renderQuiz(); drawDiagram();
+})();
+</script>
+</body>
+</html>
